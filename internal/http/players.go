@@ -8,12 +8,17 @@ import (
 	data "pubGO/pkg/data"
 	"reflect"
 	"strings"
+
+	"github.com/hashicorp/golang-lru/simplelru"
 )
+
+type LruCache *simplelru.LRU
 
 type PubgApi struct {
 	Platform string
 	key      string
 	url      string
+	lruCache LruCache
 }
 
 func (api *PubgApi) ApiKey(key string) {
@@ -22,10 +27,20 @@ func (api *PubgApi) ApiKey(key string) {
 
 func NewApi(platform, key string) *PubgApi {
 	url := fmt.Sprintf("https://api.pubg.com/shards/%s", platform)
+	lru, err := simplelru.NewLRU(128, nil)
+
+	if err != nil {
+		return &PubgApi{
+			Platform: platform,
+			key:      key,
+			url:      url,
+		}
+	}
 	return &PubgApi{
 		Platform: platform,
 		key:      key,
 		url:      url,
+		lruCache: lru,
 	}
 }
 
